@@ -10,38 +10,20 @@ def get_data():
     headers = ['Изготовитель системы', 'Название ОС', 'Код продукта', 'Тип системы']
     main_data = [headers]
 
-    os_prod_list = []
-    os_name_list = []
-    os_code_list = []
-    os_type_list = []
+    os_prod_list, os_name_list, os_code_list, os_type_list = [], [], [], []
 
-    re_prod = re.compile(r'Изготовитель системы:\s+(?P<prod>.*?)\s*\n')
-    re_name = re.compile(r'Название ОС:\s+(?P<name>.*?)\s*\n')
-    re_code = re.compile(r'Код продукта:\s+(?P<code>.*?)\s*\n')
-    re_type = re.compile(r'Тип системы:\s+(?P<type>.*?)\s*\n')
+    re_all = re.compile(r'(Название ОС|Код продукта|Изготовитель системы|Тип системы):\s+(.*?)\s*\n')
 
-    for file in files:
-        with open('data/lesson2/' + file) as f:
-            for line in f:
-                m = re.match(re_prod, line)
-                if m:
-                    prod = m.group('prod')
-                    os_prod_list.append(prod)
-                m = re.match(re_name, line)
-                if m:
-                    name = m.group('name')
-                    os_name_list.append(name)
-                m = re.match(re_code, line)
-                if m:
-                    code = m.group('code')
-                    os_code_list.append(code)
-                m = re.match(re_type, line)
-                if m:
-                    type = m.group('type')
-                    os_type_list.append(type)
+    for name in files:
+        with open('data/lesson2/' + name) as file:
+            data = file.read()
+            match = re.findall(re_all, data)
+            os_name_list.append(match[0][1])
+            os_code_list.append(match[1][1])
+            os_prod_list.append(match[2][1])
+            os_type_list.append(match[3][1])
 
-    for i in range(len(files)):
-        main_data.append([os_prod_list[i], os_name_list[i], os_code_list[i], os_type_list[i]])
+    main_data.extend([os_prod_list[i], os_name_list[i], os_code_list[i], os_type_list[i]] for i in range(len(files)))
 
     return main_data
 
@@ -49,8 +31,8 @@ def get_data():
 def write_to_csv(path):
     main_data = get_data()
 
-    with open(path, 'w', newline='') as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
+    with open(path, 'w', newline='') as file:
+        writer = csv.writer(file, quoting=csv.QUOTE_MINIMAL)
         for row in main_data:
             writer.writerow(row)
 
@@ -59,13 +41,12 @@ def write_order_to_json(item, quantity, price, buyer, date):
     path = 'data/lesson2/orders.json'
     data = {'item': item, 'quantity': quantity, 'price': price, 'buyer': buyer, 'date': date}
 
-    with open(path) as f:
-        temp = json.load(f)
+    with open(path) as file:
+        temp = json.load(file)
+        temp['orders'].append(data)
 
-    temp['orders'].append(data)
-
-    with open(path, 'w') as f:
-        json.dump(temp, f, indent=4)
+    with open(path, 'w') as file:
+        json.dump(temp, file, indent=4)
 
 
 def write_to_yaml():
@@ -76,11 +57,11 @@ def write_to_yaml():
         'currency': {'Moscow': '₽', 'Berlin': '€', 'London': '£'}
     }
 
-    with open(path, 'w', encoding='utf_8') as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+    with open(path, 'w', encoding='utf_8') as file:
+        yaml.dump(data, file, default_flow_style=False, allow_unicode=True)
 
-    with open(path, encoding='utf8') as f:
-        temp = yaml.load(f, Loader=yaml.Loader)
+    with open(path, encoding='utf8') as file:
+        temp = yaml.load(file, Loader=yaml.Loader)
 
     return data == temp
 
