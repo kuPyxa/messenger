@@ -1,7 +1,7 @@
 import yaml
 from argparse import ArgumentParser
 import socket
-
+import json
 
 parser = ArgumentParser()
 
@@ -31,12 +31,16 @@ try:
 
     print('Client was started')
 
-    data = input('Enter data:')
+    message = input('Enter message:')
 
-    sock.send(data.encode())
-    print(f'Client sent data {data}')
+    payload_client = json.dumps({'message': message})
+
+    sock.send(payload_client.encode())
+    print(f'Client sent message: {message}')
 
     b_response = sock.recv(buffer_size)
-    print(f'Server sent data {b_response.decode()}')
+    payload_server = json.loads(b_response.decode())
+    code = payload_server['code']
+    print(f'Server sent code {code}')
 except KeyboardInterrupt:
     print('Client shutdown')
