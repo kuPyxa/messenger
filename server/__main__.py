@@ -29,33 +29,25 @@ if args.config:
 host, port = config.get('host'), config.get('port')
 buffer_size = config.get('buffer_size')
 
-
-logger = logging.getLogger('main')
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-file_handler = logging.FileHandler('main.log')
-stream_handler = logging.StreamHandler()
-
-file_handler.setLevel(logging.DEBUG)
-stream_handler.setLevel(logging.DEBUG)
-
-file_handler.setFormatter(formatter)
-stream_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
-logger.addHandler(stream_handler)
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('main.log'),
+        logging.StreamHandler()
+    ]
+)
 
 try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
 
-    logger.info(f'Server started with {host}:{port}')
+    logging.info(f'Server started with {host}:{port}')
 
     while True:
         client, address = sock.accept()
-        logger.info(f'Client was detected {address[0]}:{address[1]}')
+        logging.info(f'Client was detected {address[0]}:{address[1]}')
 
         b_request = client.recv(buffer_size)
         request = json.loads(b_request.decode())
@@ -65,16 +57,16 @@ try:
             controller = resolve(action_name)
             if controller:
                 try:
-                    logger.info('Client sent valid request')
+                    logging.info('Client sent valid request')
                     response = controller(request)
                 except Exception as err:
-                    logger.critical(f'Internal server error: {err}')
+                    logging.critical(f'Internal server error: {err}')
                     response = make_response(request, 500, data='Internal server error')
             else:
-                logger.error(f'Controller with action name {action_name} does not exist')
+                logging.error(f'Controller with action name {action_name} does not exist')
                 response = make_response(request, 404, data='Action not found')
         else:
-            logger.error('Client sent wrong request')
+            logging.error('Client sent wrong request')
             response = make_response(request, 400, data='Wrong request')
 
         j_response = json.dumps(response)
