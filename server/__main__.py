@@ -2,6 +2,7 @@ import yaml
 from argparse import ArgumentParser
 import socket
 import json
+import logging
 
 from server.protocol import validate_request, make_response
 from server.actions import resolve
@@ -28,16 +29,25 @@ if args.config:
 host, port = config.get('host'), config.get('port')
 buffer_size = config.get('buffer_size')
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('main.log'),
+        logging.StreamHandler()
+    ]
+)
+
 try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
 
-    print(f'Server started with {host}:{port}')
+    logging.info(f'Server started with {host}:{port}')
 
     while True:
         client, address = sock.accept()
-        print(f'Client was detected {address[0]}:{address[1]}')
+        logging.info(f'Client was detected {address[0]}:{address[1]}')
 
         b_request = client.recv(buffer_size)
         request = json.loads(b_request.decode())
@@ -47,17 +57,17 @@ try:
             controller = resolve(action_name)
             if controller:
                 try:
-                    print('Client sent valid request')
+                    logging.info('Client sent valid request')
                     response = controller(request)
                 except Exception as err:
-                    print(f'Internal server error: {err}')
+                    logging.critical(f'Internal server error: {err}')
                     response = make_response(request, 500, data='Internal server error')
             else:
-                print(f'Controller with action name {action_name} does not exist')
+                logging.error(f'Controller with action name {action_name} does not exist')
                 response = make_response(request, 404, data='Action not found')
         else:
-            print('Client sent wrong request')
-            response = make_response(request, 404, data='Wrong request')
+            logging.error('Client sent wrong request')
+            response = make_response(request, 400, data='Wrong request')
 
         j_response = json.dumps(response)
         client.send(j_response.encode())
