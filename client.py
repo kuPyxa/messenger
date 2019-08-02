@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import socket
 import json
 from datetime import datetime
+import zlib
 
 parser = ArgumentParser()
 
@@ -43,10 +44,15 @@ try:
 
     j_request = json.dumps(request)
 
-    sock.send(j_request.encode())
+    bytes_request = zlib.compress(j_request.encode())
+
+    sock.send(bytes_request)
     print(f'Client sent request: {request}')
 
-    b_response = sock.recv(buffer_size)
+    c_response = sock.recv(buffer_size)
+
+    b_response = zlib.decompress(c_response)
+
     response = json.loads(b_response.decode())
     print(f'Server sent response {response}')
 except KeyboardInterrupt:

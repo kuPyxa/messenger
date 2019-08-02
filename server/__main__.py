@@ -1,11 +1,10 @@
 import yaml
 from argparse import ArgumentParser
 import socket
-import json
 import logging
 
-from server.protocol import validate_request, make_response
-from server.actions import resolve
+from handlers import handle_default_request
+
 
 parser = ArgumentParser()
 
@@ -50,28 +49,9 @@ try:
         logging.info(f'Client was detected {address[0]}:{address[1]}')
 
         b_request = client.recv(buffer_size)
-        request = json.loads(b_request.decode())
+        b_response = handle_default_request(b_request)
 
-        if validate_request(request):
-            action_name = request.get('action')
-            controller = resolve(action_name)
-            if controller:
-                try:
-                    logging.info('Client sent valid request')
-                    response = controller(request)
-                except Exception as err:
-                    logging.critical(f'Internal server error: {err}')
-                    response = make_response(request, 500, data='Internal server error')
-            else:
-                logging.error(f'Controller with action name {action_name} does not exist')
-                response = make_response(request, 404, data='Action not found')
-        else:
-            logging.error('Client sent wrong request')
-            response = make_response(request, 400, data='Wrong request')
-
-        j_response = json.dumps(response)
-        client.send(j_response.encode())
-
+        client.send(b_response)
         client.close()
 except KeyboardInterrupt:
     print('Server shutdown')
