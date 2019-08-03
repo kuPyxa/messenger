@@ -33,12 +33,12 @@ try:
     print('Client was started')
 
     action = input('Enter action: ')
-    message = input('Enter message: ')
+    data = input('Enter message: ')
 
     request = {
         'action': action,
         'time': datetime.now().timestamp(),
-        'message': message
+        'data': data
     }
 
     j_request = json.dumps(request)
