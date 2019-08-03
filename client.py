@@ -62,6 +62,5 @@ try:
             b_response = zlib.decompress(c_response)
             response = json.loads(b_response.decode())
             print(f'Server sent response {response}')
-
 except KeyboardInterrupt:
     print('Client shutdown')
