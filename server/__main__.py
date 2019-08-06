@@ -28,7 +28,6 @@ if args.config:
 
 requests = []
 connections = []
-rlist, wlist, xlist = [], [], []
 
 host, port = config.get('host'), config.get('port')
 buffer_size = config.get('buffer_size')
@@ -59,22 +58,20 @@ try:
         except:
             pass
 
-        try:
+        if connections:
             rlist, wlist, xlist = select.select(connections, connections, connections, 0)
-        except:
-            pass
 
-        try:
-            for read_client in rlist:
-                b_request = read_client.recv(buffer_size)
-                requests.append(b_request)
-        except ConnectionResetError:
-            pass
+            try:
+                for read_client in rlist:
+                    b_request = read_client.recv(buffer_size)
+                    requests.append(b_request)
+            except ConnectionResetError:
+                pass
 
-        if requests:
-            b_request = requests.pop()
-            b_response = handle_default_request(b_request)
-            for write_client in wlist:
-                write_client.send(b_response)
+            if requests:
+                b_request = requests.pop()
+                b_response = handle_default_request(b_request)
+                for write_client in wlist:
+                    write_client.send(b_response)
 except KeyboardInterrupt:
     print('Server shutdown')
