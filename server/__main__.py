@@ -61,17 +61,21 @@ try:
         if connections:
             rlist, wlist, xlist = select.select(connections, connections, connections, 0)
 
-            try:
-                for read_client in rlist:
+            for read_client in rlist:
+                try:
                     b_request = read_client.recv(buffer_size)
+                except Exception:
+                    connections.remove(read_client)
+                else:
                     requests.append(b_request)
-            except ConnectionResetError:
-                pass
 
             if requests:
                 b_request = requests.pop()
                 b_response = handle_default_request(b_request)
                 for write_client in wlist:
-                    write_client.send(b_response)
+                    try:
+                        write_client.send(b_response)
+                    except Exception:
+                        connections.remove(write_client)
 except KeyboardInterrupt:
     print('Server shutdown')

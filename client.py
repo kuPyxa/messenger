@@ -54,8 +54,8 @@ try:
             message = input('Enter message: ')
             request = make_request()
             j_request = json.dumps(request)
-            bytes_request = zlib.compress(j_request.encode())
-            sock.send(bytes_request)
+            b_request = zlib.compress(j_request.encode())
+            sock.send(b_request)
             print(f'Client sent request: {request}')
         elif args.mode == READ_MODE:
             c_response = sock.recv(buffer_size)
