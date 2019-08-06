@@ -1,4 +1,4 @@
-from server.protocol import make_response
+from protocol import make_response
 from decorators import logged
 
 
