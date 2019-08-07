@@ -4,9 +4,14 @@ import socket
 import json
 from datetime import datetime
 import zlib
+import threading
 
-WRITE_MODE = 'write'
-READ_MODE = 'read'
+
+def read(sock, buffer_size):
+    while True:
+        response = sock.recv(buffer_size)
+        b_response = zlib.decompress(response)
+        print(b_response.decode())
 
 
 def make_request():
@@ -21,10 +26,6 @@ parser = ArgumentParser()
 
 parser.add_argument(
     '-c', '--config', type=str, required=False, help='Set config file path'
-)
-
-parser.add_argument(
-    '-m', '--mode', type=str, default='write', help='Set client mode'
 )
 
 args = parser.parse_args()
@@ -48,19 +49,18 @@ try:
     sock.connect((host, port))
     print('Client was started')
 
+    read_thread = threading.Thread(target=read, args=(sock, buffer_size))
+    read_thread.start()
+
     while True:
-        if args.mode == WRITE_MODE:
-            action = input('Enter action: ')
-            message = input('Enter message: ')
-            request = make_request()
-            j_request = json.dumps(request)
-            b_request = zlib.compress(j_request.encode())
-            sock.send(b_request)
-            print(f'Client sent request: {request}')
-        elif args.mode == READ_MODE:
-            c_response = sock.recv(buffer_size)
-            b_response = zlib.decompress(c_response)
-            response = json.loads(b_response.decode())
-            print(f'Server sent response {response}')
+        action = input('Enter action: ')
+        message = input('Enter message: ')
+
+        request = make_request()
+        j_request = json.dumps(request)
+        b_request = zlib.compress(j_request.encode())
+
+        sock.send(b_request)
+        print(f'Client sent request: {request}')
 except KeyboardInterrupt:
     print('Client shutdown')
